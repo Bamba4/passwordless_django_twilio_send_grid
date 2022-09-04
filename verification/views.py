@@ -1,3 +1,4 @@
+from ast import Raise
 import uuid
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, get_user_model
@@ -29,13 +30,13 @@ def login_page(request):
     "form": form
     }
     if form.is_valid():
-        email = form.cleaned_data.get('email')
+        phone_number = form.cleaned_data.get('phone_number')
         try:
-            new = User.objects.get(email=email)
+            new = User.objects.get(phone_number=phone_number)
             print(new, "NEW_YORK_TIMEZONE")
             ## if user exists
             ##first: send otp to the user 
-            SendOTP.send_code(email)
+            SendOTP.send_code(phone_number)
             print("Bonjour tout le monde")
             ##second:redirect to the page to enter otp 
             temp = uuid.uuid4()
@@ -51,16 +52,21 @@ def generate_otp(request, pk, uuid):
 
 def check_otp(request):
     otp =request.POST.get("secret")
-    email = request.POST.get("email")
-    otp_status= CheckOTP.check_otp(email, otp) 
+    phone_number = request.POST.get("phone_number")
+    otp_status= CheckOTP.check_otp(phone_number, otp) 
     if otp_status == "approved":
-        user = authenticate(request, email=email) 
-      
-        if user is not None:
-           login(request, user, backend='verification.auth_backend.PasswordlessAuthBackend')
-           return redirect("/home")
-        else:
-            messages.error(request, "Wrong OTP!") 
+        try:
+            auth_user = User.objects.get(phone_number=phone_number)
+            print(auth_user, "Auth User")
+            user = authenticate(request, email=auth_user.email) 
+        
+            if user is not None:
+                login(request, user, backend='verification.auth_backend.PasswordlessAuthBackend')
+                return redirect("/home")
+            else:
+                messages.error(request, "Wrong OTP!") 
+        except:
+            Raise("User Not Found")
 
     print("otp via form: {}".format(otp))
     return render(request, "otp.html")

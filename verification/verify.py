@@ -13,8 +13,8 @@ class SendOTP:
                      .verifications \
                       .create(channel_configuration={
                            'template_id': settings.TEMPLATE_ID,
-                           'from': settings.DEFAULT_FROM_EMAIL,
+                           'from': settings.DEFAULT_FROM_PHONE,
                            'from_name': 'Bamba Diagne'
-                       }, to=receiver, channel='email')
-        print(verification)
+                       }, to=receiver, channel='sms')
+        print(verification.status)
         return verification.status
